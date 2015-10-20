@@ -38,8 +38,8 @@ public:
                 // make the scroll rect a bit smaller so they don't overlap.
                 const bool vertical = tab->rect.height() > tab->rect.width();
                 const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
-                const int leftMargin = g_margins + (tab->scrollPosition == QStyleOptionTab::Beginning ? 0 : g_fadeoutWidth);
-                const int rightMargin = g_margins + (tab->scrollPosition == QStyleOptionTab::End ? 0 : g_fadeoutWidth);
+                const int leftMargin = g_margins + (tab->position == QStyleOptionTab::Beginning ? 0 : g_fadeoutWidth);
+                const int rightMargin = g_margins + (tab->position == QStyleOptionTab::End ? 0 : g_fadeoutWidth);
                 const int x = buttonWidth + leftMargin;
                 const int w = (vertical ? opt->rect.height() : opt->rect.width()) - x - buttonWidth - rightMargin;
                 return vertical ? QRect(0, x, opt->rect.width(), w)
