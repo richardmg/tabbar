@@ -17,34 +17,17 @@ public:
         case SE_TabBarScrollLeftButton: {
             // Return the rect of the left scroll button
             const bool vertical = opt->rect.height() > opt->rect.width();
-            const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
+            const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget) + g_margins;
             return vertical ? QRect(0, 0, opt->rect.width() - 1, buttonWidth)
                 : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(0, 0, buttonWidth, opt->rect.height() - 1));
             break; }
         case SE_TabBarScrollRightButton: {
             // Return the rect of the right scroll button
             const bool vertical = opt->rect.height() > opt->rect.width();
-            const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
+            const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget) + g_margins;
             return vertical ? QRect(0, opt->rect.height() - buttonWidth, opt->rect.width() - 1, buttonWidth)
                 : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(opt->rect.width() - buttonWidth, 0, buttonWidth, opt->rect.height()));
             break; }
-        case SE_TabBarScrollRect:
-            if (const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(opt)) {
-                // Return the rect between the scroll buttons. A smaller rect will add more margins between
-                // buttons and tabs. If any of the tabs are outside the scroll rect, the scroll buttons will
-                // be enabled.
-                // When the scroll buttons are clicked, the next tab outside the scroll rect will be scrolled
-                // to visible. Since we don't want that tab to end up under the tab tear/fade-out indicator, we
-                // make the scroll rect a bit smaller so they don't overlap.
-                const bool vertical = tab->rect.height() > tab->rect.width();
-                const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
-                const int leftMargin = g_margins + (tab->position == QStyleOptionTab::Beginning ? 0 : g_fadeoutWidth);
-                const int rightMargin = g_margins + (tab->position == QStyleOptionTab::End ? 0 : g_fadeoutWidth);
-                const int x = buttonWidth + leftMargin;
-                const int w = (vertical ? opt->rect.height() : opt->rect.width()) - x - buttonWidth - rightMargin;
-                return vertical ? QRect(0, x, opt->rect.width(), w)
-                    : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(x, 0, w, opt->rect.height()));
-            }
         case SE_TabBarTearIndicatorLeft: {
             // Return the rect of the fade out area on the left side of the tabbar.
             const bool vertical = opt->rect.height() > opt->rect.width();
