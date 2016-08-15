@@ -4,7 +4,7 @@
 #endif
 
 static int g_margins = 0;
-static int g_fadeoutWidth = 20;
+static int g_fadeoutWidth = 100;
 static int g_buttonWidth = 30;
 
 #if QT_VERSION >= 0x050600
@@ -30,18 +30,45 @@ public:
             break; }
         case SE_TabBarTearIndicatorLeft: {
             // Return the rect of the fade out area on the left side of the tabbar.
+            const QStyleOptionTabV4 *tabOpt = static_cast<const QStyleOptionTabV4 *>(opt);
             const bool vertical = opt->rect.height() > opt->rect.width();
             const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
+
+            int pixelsOutOnLeft = buttonWidth - tabOpt->scrollRect.x();
+            int fadeout = qMax(5, qMin(g_fadeoutWidth, pixelsOutOnLeft));
+
+            // Er det her jeg trenger å finne hvor mange prosent inn som er scrollet for å kontrollere fadeoutwidth?
+            // Men da trenger jeg % på begge sider? fadeoutWidth vil jo måtte bli forskjellig?
+            // Hva med å sende med tabbarScrollRect.
+            //	1. Hvis den er innenfor opt->rect, så er ingenting scrollet
+            //  2. Hvis x eller y er negativ, så er det tabs utenfor til venstre.
+            //	3. Hvis x + width er større enn opt->rect, så er det også tabs utenfor til høyre
+//            opt->scrollRect();
+
+            // Problem så langt: scrollRect avhenger av tear indicator rect. Så scrollRect slik det er i QTabBar kan
+            // ikke brukes. Men kanskje jeg kan regne det ut vha scrollOffset of opt->rect?
+
+            // Rename til unionRect?
+
+            // - test vertical og left-to-right
+
             return vertical ? QRect(0, buttonWidth, opt->rect.width() - 2, g_fadeoutWidth)
-                : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(buttonWidth, 0, g_fadeoutWidth, opt->rect.height() - 2));
+                : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(buttonWidth, 0, fadeout, opt->rect.height() - 2));
             break; }
         case SE_TabBarTearIndicatorRight: {
             // Return the rect of the fade out area on the right side of the tabbar.
+            const QStyleOptionTabV4 *tabOpt = static_cast<const QStyleOptionTabV4 *>(opt);
             const bool vertical = opt->rect.height() > opt->rect.width();
             const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
-            const int x = opt->rect.width() - buttonWidth - g_fadeoutWidth;
+
+            int diff = tabOpt->scrollRect.width() - tabOpt->rect.width();
+            int pixelsOutOnRight = diff + buttonWidth + tabOpt->scrollRect.x();
+            int fadeout = qMax(5, qMin(g_fadeoutWidth, pixelsOutOnRight - (buttonWidth * 2)));
+
+            const int x = opt->rect.width() - buttonWidth - fadeout;
+
             return vertical ? QRect(0, opt->rect.height() - buttonWidth - g_fadeoutWidth, opt->rect.width() - 2, g_fadeoutWidth)
-                : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(x, 0, g_fadeoutWidth, opt->rect.height() - 2));
+                : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(x, 0, fadeout, opt->rect.height() - 2));
             break; }
         default:
             break;
@@ -61,7 +88,7 @@ public:
                         || tab->shape == QTabBar::TriangularWest;
                 const bool leftToRight = tab->direction == Qt::LeftToRight;
                 QLinearGradient gradient(opt->rect.topLeft(), vertical ? opt->rect.bottomLeft() : opt->rect.topRight());
-                gradient.setColorAt(leftToRight ? 0 : 0.8, tab->palette.window().color());
+                gradient.setColorAt(leftToRight ? 0 : 0.8, Qt::blue);
                 gradient.setColorAt(leftToRight ? 0.8 : 0, Qt::transparent);
                 p->fillRect(opt->rect, gradient);
             }
@@ -76,7 +103,7 @@ public:
                 const bool leftToRight = tab->direction == Qt::LeftToRight;
                 QLinearGradient gradient(opt->rect.topLeft(), vertical ? opt->rect.bottomLeft() : opt->rect.topRight());
                 gradient.setColorAt(leftToRight ? 0 : 0.8, Qt::transparent);
-                gradient.setColorAt(leftToRight ? 0.8 : 0, tab->palette.window().color());
+                gradient.setColorAt(leftToRight ? 0.8 : 0, Qt::blue);
                 p->fillRect(opt->rect, gradient);
             }
             break;
@@ -185,7 +212,6 @@ int main(int argc, char **argv){
     TestWidget wid1;
     wid1.resize(800, 600);
     wid1.show();
-
     return app.exec();
 }
 
