@@ -34,25 +34,21 @@ public:
             const bool vertical = opt->rect.height() > opt->rect.width();
             const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
 
-            int pixelsOutOnLeft = buttonWidth - tabOpt->scrollRect.x();
+            int pixelsOutOnLeft;
+            QRect unionRect = tabOpt->unionRect;
+
+            if (vertical) {
+                pixelsOutOnLeft = buttonWidth - unionRect.y();
+            } else if (widget->layoutDirection() == Qt::LeftToRight) {
+                pixelsOutOnLeft = buttonWidth - unionRect.x();
+            } else {
+                int diff = tabOpt->unionRect.width() - tabOpt->rect.width();
+                pixelsOutOnLeft = diff + buttonWidth + tabOpt->unionRect.x();
+            }
+
             int fadeout = qMax(5, qMin(g_fadeoutWidth, pixelsOutOnLeft));
 
-            // Er det her jeg trenger å finne hvor mange prosent inn som er scrollet for å kontrollere fadeoutwidth?
-            // Men da trenger jeg % på begge sider? fadeoutWidth vil jo måtte bli forskjellig?
-            // Hva med å sende med tabbarScrollRect.
-            //	1. Hvis den er innenfor opt->rect, så er ingenting scrollet
-            //  2. Hvis x eller y er negativ, så er det tabs utenfor til venstre.
-            //	3. Hvis x + width er større enn opt->rect, så er det også tabs utenfor til høyre
-//            opt->scrollRect();
-
-            // Problem så langt: scrollRect avhenger av tear indicator rect. Så scrollRect slik det er i QTabBar kan
-            // ikke brukes. Men kanskje jeg kan regne det ut vha scrollOffset of opt->rect?
-
-            // Rename til unionRect?
-
-            // - test vertical og left-to-right
-
-            return vertical ? QRect(0, buttonWidth, opt->rect.width() - 2, g_fadeoutWidth)
+            return vertical ? QRect(0, buttonWidth, opt->rect.width() - 2, fadeout)
                 : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(buttonWidth, 0, fadeout, opt->rect.height() - 2));
             break; }
         case SE_TabBarTearIndicatorRight: {
@@ -61,13 +57,23 @@ public:
             const bool vertical = opt->rect.height() > opt->rect.width();
             const int buttonWidth = pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, widget);
 
-            int diff = tabOpt->scrollRect.width() - tabOpt->rect.width();
-            int pixelsOutOnRight = diff + buttonWidth + tabOpt->scrollRect.x();
-            int fadeout = qMax(5, qMin(g_fadeoutWidth, pixelsOutOnRight - (buttonWidth * 2)));
+            int pixelsOutOnRight;
+            QRect unionRect = tabOpt->unionRect;
 
+            if (vertical) {
+                int diff = tabOpt->unionRect.height() - tabOpt->rect.height();
+                pixelsOutOnRight = diff + buttonWidth + tabOpt->unionRect.y();
+            } else if (widget->layoutDirection() == Qt::RightToLeft) {
+                pixelsOutOnRight = buttonWidth - unionRect.x();
+            } else {
+                int diff = tabOpt->unionRect.width() - tabOpt->rect.width();
+                pixelsOutOnRight = diff + buttonWidth + tabOpt->unionRect.x();
+            }
+
+            int fadeout = qMax(5, qMin(g_fadeoutWidth, pixelsOutOnRight - (buttonWidth * 2)));
             const int x = opt->rect.width() - buttonWidth - fadeout;
 
-            return vertical ? QRect(0, opt->rect.height() - buttonWidth - g_fadeoutWidth, opt->rect.width() - 2, g_fadeoutWidth)
+            return vertical ? QRect(0, opt->rect.height() - buttonWidth - fadeout, opt->rect.width() - 2, fadeout)
                 : QStyle::visualRect(widget->layoutDirection(), opt->rect, QRect(x, 0, fadeout, opt->rect.height() - 2));
             break; }
         default:
@@ -137,7 +143,9 @@ public:
         setLayout(mainLayout);
 
         QTabWidget *tabwidget1 = new QTabWidget;
-//        tabwidget1->setTabPosition(QTabWidget::West);
+
+        tabwidget1->setTabPosition(QTabWidget::West);
+
         tabwidget1->setMovable(true);
         for (int i = 0; i < 20; ++i)
             tabwidget1->addTab(new QWidget(), QStringLiteral("Tab") + QString::number(i));
