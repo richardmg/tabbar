@@ -144,7 +144,7 @@ public:
 
         QTabWidget *tabwidget1 = new QTabWidget;
 
-        tabwidget1->setTabPosition(QTabWidget::West);
+//        tabwidget1->setTabPosition(QTabWidget::West);
 
         tabwidget1->setMovable(true);
         for (int i = 0; i < 20; ++i)
